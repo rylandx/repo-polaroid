@@ -18,6 +18,10 @@ describe("analyzeRepo", () => {
     const analysis = analyzeRepo(dir);
 
     expect(analysis.sourceKind).toBe("folder");
+    expect(analysis.activityKind).toBe("modified-files");
+    expect(analysis.activityCount).toBe(4);
+    expect(analysis.firstSeenAt).toBe(analysis.firstCommitAt);
+    expect(analysis.lastTouchedAt).toBe(analysis.lastCommitAt);
     expect(analysis.repoName).toBe(path.basename(dir));
     expect(analysis.fileCount).toBe(4);
     expect(analysis.dirCount).toBe(2);
@@ -30,6 +34,7 @@ describe("analyzeRepo", () => {
     expect(analysis.languages[0]?.name).toBe("TypeScript");
     expect(analysis.commitsLast30Days).toBe(4);
     expect(analysis.hotFiles.length).toBeGreaterThan(0);
+    expect(analysis.notableFiles[0]?.reason).toBe("readme");
   });
 
   it("analyzes a committed local Git repository", () => {
@@ -44,6 +49,10 @@ describe("analyzeRepo", () => {
     const analysis = analyzeRepo(repo);
 
     expect(analysis.sourceKind).toBe("git");
+    expect(analysis.activityKind).toBe("commits");
+    expect(analysis.activityCount).toBe(analysis.commitsLast30Days);
+    expect(analysis.firstSeenAt).toBe(analysis.firstCommitAt);
+    expect(analysis.lastTouchedAt).toBe(analysis.lastCommitAt);
     expect(analysis.repoName).toBe(path.basename(repo));
     expect(analysis.fileCount).toBe(5);
     expect(analysis.dirCount).toBe(2);
@@ -119,6 +128,31 @@ describe("analyzeRepo", () => {
 
     expect(analysis.sourceKind).toBe("folder");
     expect(analysis.fileCount).toBe(2);
+  });
+
+  it("prioritizes useful notable files in folder mode", () => {
+    const dir = makeTempDir();
+    writeFiles(dir, {
+      "README.md": "# Helpful\n",
+      "src/index.ts": "export const entry = true;\n",
+      "tests/index.test.ts": "expect(entry).toBe(true);\n",
+      "blob.bin": "x".repeat(2000)
+    });
+
+    const analysis = analyzeRepo(dir);
+
+    expect(analysis.notableFiles.map((file) => file.path)).toEqual(["README.md", "src/index.ts", "tests/index.test.ts"]);
+    expect(analysis.notableFiles.map((file) => file.reason)).toEqual(["readme", "entry", "test"]);
+  });
+
+  it("stops scanning when the max file limit is exceeded", () => {
+    const dir = makeTempDir();
+    writeFiles(dir, {
+      "a.ts": "a",
+      "b.ts": "b"
+    });
+
+    expect(() => analyzeRepo(dir, { maxFiles: 1 })).toThrow(/File limit exceeded.*1/);
   });
 });
 

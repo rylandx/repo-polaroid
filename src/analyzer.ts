@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import ignore from "ignore";
-import type { HealthSignals, HotFile, LanguageStat, RepoAnalysis } from "./types.js";
+import type { HealthSignals, HotFile, LanguageStat, NotableFile, RepoAnalysis } from "./types.js";
 import { git, tryGit } from "./git.js";
 import { createPersona } from "./persona.js";
 
 const ALWAYS_IGNORE = [".git", "node_modules", "dist", "build", ".next", "coverage"];
+const DEFAULT_MAX_FILES = 20_000;
 
 const LANGUAGE_BY_EXTENSION: Record<string, string> = {
   ".c": "C",
@@ -41,7 +42,11 @@ type WalkResult = {
   dirs: string[];
 };
 
-export function analyzeRepo(inputPath: string): RepoAnalysis {
+export type AnalyzeOptions = {
+  maxFiles?: number;
+};
+
+export function analyzeRepo(inputPath: string, options: AnalyzeOptions = {}): RepoAnalysis {
   const repoPath = path.resolve(inputPath);
   if (!fs.existsSync(repoPath)) {
     throw new Error(`Path does not exist: ${repoPath}`);
@@ -49,7 +54,8 @@ export function analyzeRepo(inputPath: string): RepoAnalysis {
   if (!fs.statSync(repoPath).isDirectory()) {
     throw new Error(`Path is not a directory: ${repoPath}`);
   }
-  const walk = walkRepo(repoPath);
+  const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
+  const walk = walkRepo(repoPath, maxFiles);
   const health = detectHealth(walk.files);
   const languages = detectLanguages(repoPath, walk.files);
   const isCommittedGitRepo =
@@ -57,7 +63,13 @@ export function analyzeRepo(inputPath: string): RepoAnalysis {
     tryGit(["rev-parse", "--verify", "HEAD"], repoPath) !== null;
   const timeline = isCommittedGitRepo ? gitTimeline(repoPath) : folderTimeline(repoPath, walk.files);
   const largestDir = detectLargestDir(walk.files);
-  const hotFiles = isCommittedGitRepo ? detectHotFiles(repoPath) : detectNotableFiles(repoPath, walk.files);
+  const folderNotableFiles = isCommittedGitRepo ? [] : detectNotableFiles(repoPath, walk.files);
+  const hotFiles = isCommittedGitRepo
+    ? detectHotFiles(repoPath)
+    : folderNotableFiles.map((file) => ({ path: file.path, commits: file.weight }));
+  const notableFiles = isCommittedGitRepo
+    ? hotFiles.map((file) => ({ path: file.path, weight: file.commits, reason: "hot" }))
+    : folderNotableFiles;
   const projectAgeDays = Math.max(0, Math.floor((Date.now() - new Date(timeline.firstAt).getTime()) / 86_400_000));
 
   const withoutPersona: Omit<RepoAnalysis, "persona"> = {
@@ -70,11 +82,16 @@ export function analyzeRepo(inputPath: string): RepoAnalysis {
     health,
     firstCommitAt: timeline.firstAt,
     lastCommitAt: timeline.lastAt,
+    activityKind: isCommittedGitRepo ? "commits" : "modified-files",
+    activityCount: timeline.recentCount,
+    firstSeenAt: timeline.firstAt,
+    lastTouchedAt: timeline.lastAt,
     projectAgeDays,
     commitsLast30Days: timeline.recentCount,
     recentActivity: timeline.recentCount >= 20 ? "active" : timeline.recentCount >= 3 ? "warming" : "quiet",
     largestDir,
-    hotFiles
+    hotFiles,
+    notableFiles
   };
 
   return {
@@ -83,7 +100,7 @@ export function analyzeRepo(inputPath: string): RepoAnalysis {
   };
 }
 
-function walkRepo(root: string): WalkResult {
+function walkRepo(root: string, maxFiles: number): WalkResult {
   const ig = ignore().add(ALWAYS_IGNORE).add(readRootGitignore(root));
   const files: string[] = [];
   const dirs: string[] = [];
@@ -103,6 +120,9 @@ function walkRepo(root: string): WalkResult {
 
       if (entry.isFile() && !ig.ignores(rel)) {
         files.push(rel);
+        if (files.length > maxFiles) {
+          throw new Error(`File limit exceeded: found more than ${maxFiles.toLocaleString()} files. Use --max-files to raise the limit.`);
+        }
       }
     }
   }
@@ -230,14 +250,42 @@ function detectHotFiles(repoPath: string): HotFile[] {
     .slice(0, 3);
 }
 
-function detectNotableFiles(root: string, files: string[]): HotFile[] {
+function detectNotableFiles(root: string, files: string[]): NotableFile[] {
+  const now = Date.now();
   return files
     .map((filePath) => ({
       path: filePath,
-      commits: fs.statSync(path.join(root, filePath)).size
+      weight: notableWeight(root, filePath, now),
+      reason: notableReason(filePath)
     }))
-    .sort((a, b) => b.commits - a.commits || a.path.localeCompare(b.path))
+    .sort((a, b) => b.weight - a.weight || a.path.localeCompare(b.path))
     .slice(0, 3);
+}
+
+function notableReason(filePath: string): string {
+  const lower = filePath.toLowerCase();
+  const base = path.basename(lower);
+  if (base.startsWith("readme.")) return "readme";
+  if (["package.json", "pyproject.toml", "cargo.toml", "go.mod", "pom.xml", "deno.json"].includes(base)) return "config";
+  if (lower.includes("test/") || lower.includes("tests/") || lower.includes("__tests__/") || /\.(test|spec)\.[cm]?[jt]sx?$/.test(base)) return "test";
+  if (/^(src\/)?(index|main|app|cli)\.[cm]?[jt]sx?$/.test(lower) || /^(src\/)?(index|main|app|cli)\.py$/.test(lower)) return "entry";
+  return "recent";
+}
+
+function notableWeight(root: string, filePath: string, now: number): number {
+  const stat = fs.statSync(path.join(root, filePath));
+  const ageDays = Math.max(0, Math.floor((now - stat.mtime.getTime()) / 86_400_000));
+  const recency = Math.max(0, 30 - ageDays);
+  const size = Math.min(100, Math.floor(stat.size / 100));
+  const reason = notableReason(filePath);
+  const boost: Record<string, number> = {
+    readme: 10_000,
+    config: 9_000,
+    entry: 8_000,
+    test: 7_000,
+    recent: 0
+  };
+  return (boost[reason] ?? 0) + recency * 10 + size;
 }
 
 function toPosix(value: string): string {

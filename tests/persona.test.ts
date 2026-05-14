@@ -12,11 +12,16 @@ const baseRepo: Omit<RepoAnalysis, "persona"> = {
   health: { readme: true, license: true, tests: true, config: true },
   firstCommitAt: "2026-01-01T00:00:00.000Z",
   lastCommitAt: "2026-01-02T00:00:00.000Z",
+  activityKind: "commits",
+  activityCount: 6,
+  firstSeenAt: "2026-01-01T00:00:00.000Z",
+  lastTouchedAt: "2026-01-02T00:00:00.000Z",
   projectAgeDays: 1,
   commitsLast30Days: 6,
   recentActivity: "warming",
   largestDir: "src",
-  hotFiles: []
+  hotFiles: [],
+  notableFiles: []
 };
 
 describe("createPersona", () => {

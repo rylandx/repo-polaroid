@@ -1,7 +1,7 @@
 {
   "name": "repo-polaroid",
   "version": "0.1.0",
-  "description": "Generate a vintage polaroid-style SVG portrait for a local Git repository.",
+  "description": "Generate a vintage polaroid-style SVG portrait for a local Git repository or folder.",
   "type": "module",
   "bin": {
     "repo-polaroid": "./dist/cli.js"
@@ -22,6 +22,8 @@
     "cli",
     "svg",
     "repository",
+    "folder",
+    "readme",
     "polaroid"
   ],
   "author": "",
