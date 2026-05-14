@@ -32,6 +32,29 @@ describe("CLI", () => {
     expect(data.languages[0].name).toBe("JavaScript");
   });
 
+  it("prints folder-mode JSON for plain directories", () => {
+    const repo = makeTempDir();
+    fs.mkdirSync(path.join(repo, "src"), { recursive: true });
+    fs.writeFileSync(path.join(repo, "src/index.ts"), "export const demo = true;\n", "utf8");
+
+    const stdout = execFileSync("npx", ["tsx", cli, repo, "--json"], { encoding: "utf8" });
+    const data = JSON.parse(stdout);
+
+    expect(data.sourceKind).toBe("folder");
+    expect(data.repoName).toBe(path.basename(repo));
+  });
+
+  it("writes an SVG for plain directories", () => {
+    const repo = makeTempDir();
+    fs.mkdirSync(path.join(repo, "src"), { recursive: true });
+    fs.writeFileSync(path.join(repo, "src/index.ts"), "export const demo = true;\n", "utf8");
+    const out = path.join(makeTempDir(), "folder.svg");
+
+    execFileSync("npx", ["tsx", cli, repo, "--out", out], { encoding: "utf8" });
+
+    expect(fs.readFileSync(out, "utf8")).toContain("<svg");
+  });
+
   it("keeps stdout parseable when --json and --out are combined", () => {
     const repo = initRepo({
       "README.md": "# Demo\n",

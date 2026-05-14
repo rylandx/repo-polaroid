@@ -49,38 +49,30 @@ export function analyzeRepo(inputPath: string): RepoAnalysis {
   if (!fs.statSync(repoPath).isDirectory()) {
     throw new Error(`Path is not a directory: ${repoPath}`);
   }
-  if (tryGit(["rev-parse", "--is-inside-work-tree"], repoPath) !== "true") {
-    throw new Error(`Not a Git repository: ${repoPath}`);
-  }
-  if (!tryGit(["rev-parse", "--verify", "HEAD"], repoPath)) {
-    throw new Error("Repository has no commits yet. Make at least one commit before taking a polaroid.");
-  }
-
   const walk = walkRepo(repoPath);
   const health = detectHealth(walk.files);
   const languages = detectLanguages(repoPath, walk.files);
-  const firstCommitAt = git(["log", "--reverse", "--format=%cI", "-1"], repoPath);
-  const lastCommitAt = git(["log", "-1", "--format=%cI"], repoPath);
-  const commitsLast30Days = countCommitsSince(repoPath, 30);
+  const isCommittedGitRepo =
+    tryGit(["rev-parse", "--is-inside-work-tree"], repoPath) === "true" &&
+    tryGit(["rev-parse", "--verify", "HEAD"], repoPath) !== null;
+  const timeline = isCommittedGitRepo ? gitTimeline(repoPath) : folderTimeline(repoPath, walk.files);
   const largestDir = detectLargestDir(walk.files);
-  const hotFiles = detectHotFiles(repoPath);
-  const projectAgeDays = Math.max(
-    0,
-    Math.floor((Date.now() - new Date(firstCommitAt).getTime()) / 86_400_000)
-  );
+  const hotFiles = isCommittedGitRepo ? detectHotFiles(repoPath) : detectNotableFiles(repoPath, walk.files);
+  const projectAgeDays = Math.max(0, Math.floor((Date.now() - new Date(timeline.firstAt).getTime()) / 86_400_000));
 
   const withoutPersona: Omit<RepoAnalysis, "persona"> = {
+    sourceKind: isCommittedGitRepo ? "git" : "folder",
     repoName: path.basename(repoPath),
     repoPath,
     fileCount: walk.files.length,
     dirCount: walk.dirs.length,
     languages,
     health,
-    firstCommitAt,
-    lastCommitAt,
+    firstCommitAt: timeline.firstAt,
+    lastCommitAt: timeline.lastAt,
     projectAgeDays,
-    commitsLast30Days,
-    recentActivity: commitsLast30Days >= 20 ? "active" : commitsLast30Days >= 3 ? "warming" : "quiet",
+    commitsLast30Days: timeline.recentCount,
+    recentActivity: timeline.recentCount >= 20 ? "active" : timeline.recentCount >= 3 ? "warming" : "quiet",
     largestDir,
     hotFiles
   };
@@ -180,6 +172,40 @@ function countCommitsSince(repoPath: string, days: number): number {
   return output.split(/\r?\n/).filter(Boolean).length;
 }
 
+function gitTimeline(repoPath: string): { firstAt: string; lastAt: string; recentCount: number } {
+  return {
+    firstAt: git(["log", "--reverse", "--format=%cI", "-1"], repoPath),
+    lastAt: git(["log", "-1", "--format=%cI"], repoPath),
+    recentCount: countCommitsSince(repoPath, 30)
+  };
+}
+
+function folderTimeline(root: string, files: string[]): { firstAt: string; lastAt: string; recentCount: number } {
+  const now = Date.now();
+  const thirtyDaysAgo = now - 30 * 86_400_000;
+  if (files.length === 0) {
+    const iso = new Date(now).toISOString();
+    return { firstAt: iso, lastAt: iso, recentCount: 0 };
+  }
+
+  let first = Number.POSITIVE_INFINITY;
+  let last = 0;
+  let recentCount = 0;
+
+  for (const file of files) {
+    const mtime = fs.statSync(path.join(root, file)).mtime.getTime();
+    first = Math.min(first, mtime);
+    last = Math.max(last, mtime);
+    if (mtime >= thirtyDaysAgo) recentCount += 1;
+  }
+
+  return {
+    firstAt: new Date(first).toISOString(),
+    lastAt: new Date(last).toISOString(),
+    recentCount
+  };
+}
+
 function detectLargestDir(files: string[]): string | null {
   const counts = new Map<string, number>();
   for (const file of files) {
@@ -200,6 +226,16 @@ function detectHotFiles(repoPath: string): HotFile[] {
 
   return [...counts.entries()]
     .map(([filePath, commits]) => ({ path: filePath, commits }))
+    .sort((a, b) => b.commits - a.commits || a.path.localeCompare(b.path))
+    .slice(0, 3);
+}
+
+function detectNotableFiles(root: string, files: string[]): HotFile[] {
+  return files
+    .map((filePath) => ({
+      path: filePath,
+      commits: fs.statSync(path.join(root, filePath)).size
+    }))
     .sort((a, b) => b.commits - a.commits || a.path.localeCompare(b.path))
     .slice(0, 3);
 }

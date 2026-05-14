@@ -18,6 +18,7 @@ export type HotFile = {
 };
 
 export type RepoAnalysis = {
+  sourceKind: "git" | "folder";
   repoName: string;
   repoPath: string;
   fileCount: number;

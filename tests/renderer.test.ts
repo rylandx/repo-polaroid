@@ -10,6 +10,7 @@ describe("SVG rendering", () => {
 
   it("renders a standalone SVG", () => {
     const analysis: RepoAnalysis = {
+      sourceKind: "git",
       repoName: "demo <repo>",
       repoPath: "/tmp/demo",
       fileCount: 2,

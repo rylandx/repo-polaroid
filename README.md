@@ -4,20 +4,20 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-Turn any local Git repository into a vintage polaroid-style SVG portrait.
+Turn any local Git repository or folder into a vintage polaroid-style SVG portrait.
 
 ![Repo Polaroid example](./assets/demo.svg)
 
-Repo Polaroid reads your local file tree and Git history, then creates a shareable card with the project's language mix, activity, health signals, hot files, and a short personality caption.
+Repo Polaroid reads your local file tree and, when available, Git history. It creates a shareable card with the project's language mix, activity, health signals, notable files, and a short personality caption.
 
 > [!TIP]
 > Drop the generated SVG into your README to give visitors an instant feel for the repository.
 
 ## Features
 
-- **One-command repo portrait**: generate a polished SVG from any committed local Git repository.
+- **One-command project portrait**: generate a polished SVG from any local Git repository or plain folder.
 - **Local-first by default**: no backend, no account, and no API key required.
-- **Git-aware stats**: project age, recent commits, hot files, file count, directory count, and activity level.
+- **Git-aware when possible**: use commit history for Git repositories, and file modification times for plain folders.
 - **Readable health signals**: README, license, test, and config detection.
 - **Optional AI caption**: use `--caption-ai` to try an OpenAI-powered caption, with automatic local fallback.
 
@@ -29,13 +29,19 @@ Install globally:
 npm install -g repo-polaroid
 ```
 
-Generate a polaroid for the current repository:
+Generate a polaroid for the current repository or folder:
 
 ```bash
 repo-polaroid .
 ```
 
 This writes `repo-polaroid.svg` in your current directory.
+
+Generate one for a plain folder:
+
+```bash
+repo-polaroid /Users/fanli/projects/RAFT --out repo-polaroid.svg
+```
 
 ## Usage
 
@@ -87,14 +93,10 @@ npm run dev -- . --out repo-polaroid.svg
 
 ## Troubleshooting
 
-**`Repository has no commits yet`**
+**`Path is not a directory`**
 
-Repo Polaroid uses Git history for the timestamp and activity metrics. Make at least one commit before generating a card.
-
-**`Not a Git repository`**
-
-Pass a path inside a local Git worktree:
+Pass a local directory path:
 
 ```bash
-repo-polaroid /path/to/repo
+repo-polaroid /path/to/project
 ```

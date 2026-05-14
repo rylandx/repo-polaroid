@@ -10,7 +10,11 @@ export function renderSvg(repo: RepoAnalysis): string {
     { label: "CONFIG", active: repo.health.config }
   ];
   const bars = renderLanguageBars(languages);
-  const hotFiles = repo.hotFiles.length > 0 ? repo.hotFiles.map((file) => truncate(file.path, 26)).join(" · ") : "no hot files yet";
+  const hotLabel = repo.sourceKind === "git" ? "hot" : "notable";
+  const recentLabel = repo.sourceKind === "git" ? "30 DAYS" : "RECENT";
+  const lastTouchedLabel = repo.sourceKind === "git" ? "last commit" : "last touched";
+  const hotFiles =
+    repo.hotFiles.length > 0 ? repo.hotFiles.map((file) => truncate(file.path, 26)).join(" · ") : `no ${hotLabel} files yet`;
   const largestDir = repo.largestDir ?? "root";
   const primaryLanguage = languages[0]?.name ?? "Unknown";
 
@@ -72,7 +76,7 @@ export function renderSvg(repo: RepoAnalysis): string {
 
     <text x="86" y="126" class="overline">REPO POLAROID</text>
     <text x="84" y="186" class="title">${escapeXml(truncate(repo.repoName, 17))}</text>
-    <text x="86" y="224" class="photoSmall">${escapeXml(primaryLanguage)} · ${escapeXml(repo.fileCount.toLocaleString())} files · ${escapeXml(repo.recentActivity)}</text>
+    <text x="86" y="224" class="photoSmall">${escapeXml(primaryLanguage)} · ${escapeXml(repo.sourceKind)} · ${escapeXml(repo.fileCount.toLocaleString())} files · ${escapeXml(repo.recentActivity)}</text>
 
     <g transform="translate(86 292)">
       <text class="photoSmall" x="0" y="0">language exposure</text>
@@ -81,19 +85,19 @@ export function renderSvg(repo: RepoAnalysis): string {
 
     <g transform="translate(86 500)">
       ${renderMetricCard(0, "AGE", `${repo.projectAgeDays}d`)}
-      ${renderMetricCard(164, "30 DAYS", `${repo.commitsLast30Days}`)}
+      ${renderMetricCard(164, recentLabel, `${repo.commitsLast30Days}`)}
       ${renderMetricCard(328, "DIRS", repo.dirCount.toLocaleString())}
     </g>
 
     <g transform="translate(86 610)">
       <rect x="0" y="-32" width="530" height="42" rx="21" fill="#221c19" opacity="0.34"/>
-      <text class="photoSmall" x="22" y="-5">hot: ${escapeXml(hotFiles)}</text>
+      <text class="photoSmall" x="22" y="-5">${hotLabel}: ${escapeXml(hotFiles)}</text>
     </g>
 
     <g transform="translate(82 724)">
       <text class="label" x="0" y="0">field notes</text>
       <text class="text" x="0" y="48">largest room: ${escapeXml(truncate(largestDir, 24))}</text>
-      <text class="small" x="0" y="84">last commit: ${escapeXml(new Date(repo.lastCommitAt).toISOString().slice(0, 10))}</text>
+      <text class="small" x="0" y="84">${lastTouchedLabel}: ${escapeXml(new Date(repo.lastCommitAt).toISOString().slice(0, 10))}</text>
     </g>
 
     <g transform="translate(82 856)">

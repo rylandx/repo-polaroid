@@ -3,6 +3,7 @@ import { createPersona } from "../src/persona.js";
 import type { RepoAnalysis } from "../src/types.js";
 
 const baseRepo: Omit<RepoAnalysis, "persona"> = {
+  sourceKind: "git",
   repoName: "demo",
   repoPath: "/tmp/demo",
   fileCount: 8,
