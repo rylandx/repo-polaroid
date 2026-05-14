@@ -35,6 +35,10 @@ describe("analyzeRepo", () => {
     expect(analysis.commitsLast30Days).toBe(4);
     expect(analysis.hotFiles.length).toBeGreaterThan(0);
     expect(analysis.notableFiles[0]?.reason).toBe("readme");
+    expect(analysis.captionSource).toBe("local");
+    expect(analysis.personaType).toBe("Prototype Lab");
+    expect(analysis.rarityScore).toBeGreaterThan(0);
+    expect(analysis.rarity).toMatch(/Common|Rare|Epic|Legendary/);
   });
 
   it("analyzes a committed local Git repository", () => {
@@ -64,6 +68,8 @@ describe("analyzeRepo", () => {
     });
     expect(analysis.languages[0]?.name).toBe("TypeScript");
     expect(analysis.persona).toMatch(/TypeScript/);
+    expect(analysis.captionSource).toBe("local");
+    expect(analysis.personaReasons).toContain("strong project signals");
   });
 
   it("respects root .gitignore and common ignored directories", () => {

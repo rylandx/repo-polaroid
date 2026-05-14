@@ -3,7 +3,7 @@ import path from "node:path";
 import ignore from "ignore";
 import type { HealthSignals, HotFile, LanguageStat, NotableFile, RepoAnalysis } from "./types.js";
 import { git, tryGit } from "./git.js";
-import { createPersona } from "./persona.js";
+import { createPersona, createPlayfulProfile } from "./persona.js";
 
 const ALWAYS_IGNORE = [".git", "node_modules", "dist", "build", ".next", "coverage"];
 const DEFAULT_MAX_FILES = 20_000;
@@ -72,7 +72,7 @@ export function analyzeRepo(inputPath: string, options: AnalyzeOptions = {}): Re
     : folderNotableFiles;
   const projectAgeDays = Math.max(0, Math.floor((Date.now() - new Date(timeline.firstAt).getTime()) / 86_400_000));
 
-  const withoutPersona: Omit<RepoAnalysis, "persona"> = {
+  const withoutPersona: Omit<RepoAnalysis, "persona" | "captionSource" | "personaType" | "personaReasons" | "rarity" | "rarityScore"> = {
     sourceKind: isCommittedGitRepo ? "git" : "folder",
     repoName: path.basename(repoPath),
     repoPath,
@@ -93,10 +93,13 @@ export function analyzeRepo(inputPath: string, options: AnalyzeOptions = {}): Re
     hotFiles,
     notableFiles
   };
+  const playfulProfile = createPlayfulProfile(withoutPersona);
 
   return {
     ...withoutPersona,
-    persona: createPersona(withoutPersona)
+    persona: createPersona(withoutPersona),
+    captionSource: "local",
+    ...playfulProfile
   };
 }
 

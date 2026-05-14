@@ -5,6 +5,8 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { analyzeRepo } from "./analyzer.js";
 import { createAiPersona } from "./persona.js";
+import { writePreviewHtml } from "./preview.js";
+import { writeReadmeEmbed } from "./readme.js";
 import { renderSvg } from "./renderer.js";
 import type { ThemeName } from "./types.js";
 
@@ -16,6 +18,9 @@ type CliOptions = {
   open: boolean;
   theme: ThemeName;
   maxFiles: number;
+  writeReadme: boolean;
+  readme: string | null;
+  preview: boolean;
 };
 
 const THEMES: ThemeName[] = ["classic", "darkroom", "sunset"];
@@ -23,11 +28,23 @@ const DEFAULT_MAX_FILES = 20_000;
 
 export async function main(argv = process.argv.slice(2)): Promise<void> {
   const options = parseArgs(argv);
+  if (options.json && options.preview && !options.out) {
+    throw new Error("--preview requires --out when --json is used");
+  }
+  if (options.json && options.writeReadme && !options.out) {
+    throw new Error("--write-readme requires --out when --json is used");
+  }
+
   const analysis = analyzeRepo(options.repoPath, { maxFiles: options.maxFiles });
 
   if (options.captionAi) {
     const aiPersona = await createAiPersona(analysis);
-    if (aiPersona) analysis.persona = aiPersona;
+    if (aiPersona) {
+      analysis.persona = aiPersona;
+      analysis.captionSource = "ai";
+    } else {
+      analysis.captionSource = "fallback";
+    }
   }
 
   if (options.json) {
@@ -44,14 +61,24 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       process.stdout.write(message);
     }
 
+    if (options.writeReadme) {
+      const readmePath = writeReadmeEmbed({
+        repoPath: path.resolve(options.repoPath),
+        outPath,
+        readmePath: options.readme
+      });
+      writeMessage(`README updated at ${readmePath}\n`, options.json);
+    }
+
     if (options.open) {
       openFile(outPath);
-      const openMessage = `Opened ${outPath}\n`;
-      if (options.json) {
-        process.stderr.write(openMessage);
-      } else {
-        process.stdout.write(openMessage);
-      }
+      writeMessage(`Opened ${outPath}\n`, options.json);
+    }
+
+    if (options.preview) {
+      const previewPath = writePreviewHtml(analysis, { outPath, theme: options.theme });
+      openFile(previewPath);
+      writeMessage(`Preview opened at ${previewPath}\n`, options.json);
     }
   }
 }
@@ -64,6 +91,9 @@ export function parseArgs(argv: string[]): CliOptions {
   let open = false;
   let theme: ThemeName = "classic";
   let maxFiles = DEFAULT_MAX_FILES;
+  let writeReadme = false;
+  let readme: string | null = null;
+  let preview = false;
   let sawPath = false;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -86,6 +116,32 @@ export function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--open") {
       open = true;
+      continue;
+    }
+
+    if (arg === "--write-readme") {
+      writeReadme = true;
+      continue;
+    }
+
+    if (arg === "--preview") {
+      preview = true;
+      continue;
+    }
+
+    if (arg === "--readme") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--readme requires a file path");
+      readme = value;
+      writeReadme = true;
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--readme=")) {
+      readme = arg.slice("--readme=".length);
+      if (!readme) throw new Error("--readme requires a file path");
+      writeReadme = true;
       continue;
     }
 
@@ -140,7 +196,7 @@ export function parseArgs(argv: string[]): CliOptions {
     sawPath = true;
   }
 
-  return { repoPath, out, json, captionAi, open, theme, maxFiles };
+  return { repoPath, out, json, captionAi, open, theme, maxFiles, writeReadme, readme, preview };
 }
 
 function parseTheme(value: string): ThemeName {
@@ -172,6 +228,14 @@ function openFile(filePath: string): void {
   }
 }
 
+function writeMessage(message: string, stderr: boolean): void {
+  if (stderr) {
+    process.stderr.write(message);
+  } else {
+    process.stdout.write(message);
+  }
+}
+
 function printHelp(): void {
   process.stdout.write(`repo-polaroid
 
@@ -183,15 +247,20 @@ Usage:
   repo-polaroid . --json
   repo-polaroid . --theme sunset --open
   repo-polaroid . --caption-ai
+  repo-polaroid . --out repo-polaroid.svg --write-readme
+  repo-polaroid . --out repo-polaroid.svg --preview
 
 Options:
-  --out <file>    Write SVG to a specific path
-  --json          Print analysis JSON instead of writing SVG
-  --open          Open the generated SVG after writing it
-  --theme <name>  Use classic, darkroom, or sunset
-  --max-files <n> Stop scanning after this many files (default: 20000)
-  --caption-ai    Try to replace the local caption with an AI caption
-  -h, --help      Show help
+  --out <file>      Write SVG to a specific path
+  --json            Print analysis JSON instead of writing SVG
+  --open            Open the generated SVG after writing it
+  --preview         Generate and open a local preview HTML page
+  --write-readme    Insert or update the README embed block
+  --readme <file>   Use a specific README path and enable --write-readme
+  --theme <name>    Use classic, darkroom, or sunset
+  --max-files <n>   Stop scanning after this many files (default: 20000)
+  --caption-ai      Try to replace the local caption with an AI caption
+  -h, --help        Show help
 `);
 }
 

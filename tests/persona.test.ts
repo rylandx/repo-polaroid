@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createAiPersona, createPersona } from "../src/persona.js";
+import { createAiPersona, createPersona, createPlayfulProfile } from "../src/persona.js";
 import type { RepoAnalysis } from "../src/types.js";
 
-const baseRepo: Omit<RepoAnalysis, "persona"> = {
+const baseRepo: Omit<RepoAnalysis, "persona" | "captionSource" | "personaType" | "personaReasons" | "rarity" | "rarityScore"> = {
   sourceKind: "git",
   repoName: "demo",
   repoPath: "/tmp/demo",
@@ -24,6 +24,16 @@ const baseRepo: Omit<RepoAnalysis, "persona"> = {
   notableFiles: []
 };
 
+const fullRepo: RepoAnalysis = {
+  ...baseRepo,
+  persona: "local caption",
+  captionSource: "local",
+  personaType: "TypeScript Toolkit",
+  personaReasons: ["strong project signals"],
+  rarity: "Epic",
+  rarityScore: 65
+};
+
 describe("createPersona", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -43,6 +53,15 @@ describe("createPersona", () => {
     );
   });
 
+  it("creates stable persona badges and rarity", () => {
+    expect(createPlayfulProfile(baseRepo)).toEqual({
+      personaType: "TypeScript Toolkit",
+      personaReasons: ["strong project signals"],
+      rarity: "Epic",
+      rarityScore: 65
+    });
+  });
+
   it("uses OpenAI-compatible chat completions when a custom API base is configured", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -56,7 +75,7 @@ describe("createPersona", () => {
     process.env.REPO_POLAROID_API_BASE = "https://api.deepseek.com";
     process.env.REPO_POLAROID_MODEL = "deepseek-v4-pro";
 
-    await expect(createAiPersona({ ...baseRepo, persona: "local caption" })).resolves.toBe("DeepSeek caption");
+    await expect(createAiPersona(fullRepo)).resolves.toBe("DeepSeek caption");
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.deepseek.com/chat/completions",
@@ -79,7 +98,7 @@ describe("createPersona", () => {
     process.env.REPO_POLAROID_API_KEY = "test-key";
     process.env.REPO_POLAROID_API_BASE = "https://api.deepseek.com";
 
-    const caption = await createAiPersona({ ...baseRepo, persona: "local caption" });
+    const caption = await createAiPersona(fullRepo);
 
     expect(caption).toHaveLength(120);
     expect(caption?.startsWith("\"")).toBe(false);

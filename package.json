@@ -24,7 +24,10 @@
     "repository",
     "folder",
     "readme",
-    "polaroid"
+    "polaroid",
+    "developer-tools",
+    "repo-card",
+    "github-profile"
   ],
   "author": "",
   "license": "MIT",

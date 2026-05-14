@@ -24,6 +24,8 @@ export type NotableFile = {
 };
 
 export type ThemeName = "classic" | "darkroom" | "sunset";
+export type CaptionSource = "local" | "ai" | "fallback";
+export type Rarity = "Common" | "Rare" | "Epic" | "Legendary";
 
 export type RepoAnalysis = {
   sourceKind: "git" | "folder";
@@ -46,4 +48,9 @@ export type RepoAnalysis = {
   hotFiles: HotFile[];
   notableFiles: NotableFile[];
   persona: string;
+  captionSource: CaptionSource;
+  personaType: string;
+  personaReasons: string[];
+  rarity: Rarity;
+  rarityScore: number;
 };

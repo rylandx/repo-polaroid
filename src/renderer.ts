@@ -88,6 +88,7 @@ export function renderSvg(repo: RepoAnalysis, options: RenderOptions = {}): stri
   const captionLines = wrapText(repo.persona, 38, 2);
   const largestDir = repo.largestDir ?? "root";
   const primaryLanguage = languages[0]?.name ?? "Unknown";
+  const captionSource = `${repo.captionSource === "ai" ? "AI" : repo.captionSource} caption`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="920" height="1120" viewBox="0 0 920 1120" role="img" aria-label="${escapeXml(repo.repoName)} repository polaroid">
   <defs>
@@ -148,8 +149,12 @@ export function renderSvg(repo: RepoAnalysis, options: RenderOptions = {}): stri
     <text x="86" y="126" class="overline">REPO POLAROID</text>
     <text x="84" y="186" class="title">${escapeXml(truncate(repo.repoName, 17))}</text>
     <text x="86" y="224" class="photoSmall">${escapeXml(primaryLanguage)} · ${escapeXml(repo.sourceKind)} · ${escapeXml(repo.fileCount.toLocaleString())} files · ${escapeXml(repo.recentActivity)}</text>
+    <g transform="translate(86 246)">
+      ${renderBadge(0, truncate(repo.personaType, 22), theme.accent, "#fff8e8")}
+      ${renderBadge(240, `${repo.rarity} · ${repo.rarityScore}`, theme.accentSoft, "#2d201b")}
+    </g>
 
-    <g transform="translate(86 292)">
+    <g transform="translate(86 312)">
       <text class="photoSmall" x="0" y="0">language exposure</text>
       ${bars}
     </g>
@@ -176,6 +181,7 @@ export function renderSvg(repo: RepoAnalysis, options: RenderOptions = {}): stri
     </g>
 
     <path d="M70 832 C230 820 420 842 694 820" fill="none" stroke="#d7c5aa" stroke-width="2"/>
+    <text x="82" y="898" class="small">${escapeXml(captionSource)}</text>
     <text x="82" y="940" class="caption">${renderTspans(captionLines, 42)}</text>
   </g>
 </svg>
@@ -210,6 +216,13 @@ function renderHealthStamp(x: number, label: string, active: boolean): string {
   return `<g transform="translate(${x} 0)">
       <rect width="136" height="44" rx="4" fill="${fill}" fill-opacity="${active ? "0.95" : "0.55"}" stroke="${stroke}" stroke-width="2"/>
       <text class="small" x="68" y="29" text-anchor="middle" style="fill:${active ? "#fff8e8" : "#6b4f39"}">${escapeXml(text)}</text>
+    </g>`;
+}
+
+function renderBadge(x: number, label: string, fill: string, text: string): string {
+  return `<g transform="translate(${x} 0)">
+      <rect width="212" height="34" rx="17" fill="${fill}" opacity="0.92"/>
+      <text class="photoSmall" x="106" y="24" text-anchor="middle" style="fill:${text};font-size:15px">${escapeXml(label)}</text>
     </g>`;
 }
 

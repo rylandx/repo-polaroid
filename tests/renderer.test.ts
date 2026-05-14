@@ -29,7 +29,12 @@ describe("SVG rendering", () => {
       largestDir: "src",
       hotFiles: [{ path: "src/index.ts", commits: 1 }],
       notableFiles: [{ path: "src/index.ts", weight: 1, reason: "hot" }],
-      persona: "A <sharp> & useful repo"
+      persona: "A <sharp> & useful repo",
+      captionSource: "ai",
+      personaType: "Tool <Kit>",
+      personaReasons: ["strong project signals"],
+      rarity: "Epic",
+      rarityScore: 64
     };
 
     const svg = renderSvg(analysis, { theme: "sunset" });
@@ -39,6 +44,9 @@ describe("SVG rendering", () => {
     expect(svg).toContain("#8f3f2b");
     expect(svg).toContain("demo &lt;repo&gt;");
     expect(svg).toContain("A &lt;sharp&gt; &amp; useful repo");
+    expect(svg).toContain("AI caption");
+    expect(svg).toContain("Tool &lt;Kit&gt;");
+    expect(svg).toContain("Epic · 64");
   });
 
   it("escapes long wrapped text", () => {
@@ -62,7 +70,12 @@ describe("SVG rendering", () => {
       largestDir: "src",
       hotFiles: [{ path: "src/<unsafe>&file.ts", commits: 1 }],
       notableFiles: [{ path: "src/<unsafe>&file.ts", weight: 1, reason: "entry" }],
-      persona: "A <caption> & a folder with a very long handwritten note"
+      persona: "A <caption> & a folder with a very long handwritten note",
+      captionSource: "fallback",
+      personaType: "Prototype <Lab>",
+      personaReasons: ["folder snapshot"],
+      rarity: "Rare",
+      rarityScore: 42
     };
 
     const svg = renderSvg(analysis);
