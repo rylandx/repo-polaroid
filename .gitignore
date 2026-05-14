@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+*.log
+repo-polaroid.svg
+.agents
+skills-lock.json

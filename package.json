@@ -1,0 +1,41 @@
+{
+  "name": "repo-polaroid",
+  "version": "0.1.0",
+  "description": "Generate a vintage polaroid-style SVG portrait for a local Git repository.",
+  "type": "module",
+  "bin": {
+    "repo-polaroid": "./dist/cli.js"
+  },
+  "files": [
+    "assets",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "tsx src/cli.ts"
+  },
+  "keywords": [
+    "git",
+    "cli",
+    "svg",
+    "repository",
+    "polaroid"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ignore": "^7.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
+  }
+}

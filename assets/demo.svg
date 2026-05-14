@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="1120" viewBox="0 0 920 1120" role="img" aria-label="sunrise-cli repository polaroid">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="20" flood-color="#2b2520" flood-opacity="0.26"/>
+    </filter>
+    <filter id="paperNoise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="4" seed="11"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.055"/>
+      </feComponentTransfer>
+    </filter>
+    <linearGradient id="photo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#16211f"/>
+      <stop offset="45%" stop-color="#314b43"/>
+      <stop offset="100%" stop-color="#d8a866"/>
+    </linearGradient>
+    <linearGradient id="glare" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fff6df" stop-opacity="0.72"/>
+      <stop offset="35%" stop-color="#fff6df" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#fff6df" stop-opacity="0"/>
+    </linearGradient>
+    <style>
+      .title { font: 800 56px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: #fff8e9; letter-spacing: 0; }
+      .overline { font: 800 15px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: #e9c38a; letter-spacing: 3px; }
+      .label { font: 800 20px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: #513f32; letter-spacing: 0; }
+      .text { font: 700 24px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: #302720; }
+      .small { font: 600 18px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: #6d5949; }
+      .photoSmall { font: 700 18px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: #f7e6c8; }
+      .caption { font: 500 37px "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive; fill: #2e251f; }
+    </style>
+  </defs>
+
+  <rect width="920" height="1120" fill="#b99f7d"/>
+  <rect width="920" height="1120" fill="#000" filter="url(#paperNoise)" opacity="0.6"/>
+  <circle cx="132" cy="174" r="150" fill="#e3c48d" opacity="0.28"/>
+  <circle cx="782" cy="918" r="190" fill="#6f3f34" opacity="0.16"/>
+  <path d="M0 806 C190 760 300 832 470 786 C650 738 760 770 920 724 L920 1120 L0 1120 Z" fill="#7f6a51" opacity="0.2"/>
+
+  <g transform="translate(278 26) rotate(-4)">
+    <rect x="0" y="0" width="362" height="58" rx="8" fill="#ead7b6" opacity="0.72"/>
+    <path d="M18 0 L42 58 M78 0 L102 58 M138 0 L162 58 M198 0 L222 58 M258 0 L282 58 M318 0 L342 58" stroke="#d0ae78" stroke-width="2" opacity="0.38"/>
+  </g>
+
+  <g transform="translate(80 54) rotate(-1.4 380 500)" filter="url(#shadow)">
+    <rect width="760" height="990" rx="12" fill="#fff8ea"/>
+    <rect width="760" height="990" rx="12" fill="#000" filter="url(#paperNoise)" opacity="0.45"/>
+    <rect x="34" y="34" width="692" height="646" rx="10" fill="#e7d6bd"/>
+    <rect x="48" y="48" width="664" height="618" rx="8" fill="url(#photo)"/>
+    <rect x="48" y="48" width="664" height="618" rx="8" fill="#000" filter="url(#paperNoise)" opacity="0.24"/>
+    <path d="M48 48 H712 V254 C576 218 458 304 330 268 C210 234 118 152 48 180 Z" fill="url(#glare)"/>
+    <rect x="74" y="74" width="612" height="566" rx="3" fill="none" stroke="#fff2d8" stroke-width="2" opacity="0.32"/>
+    <circle cx="646" cy="118" r="42" fill="#e75d42" opacity="0.94"/>
+    <circle cx="646" cy="118" r="23" fill="#ffd4ab" opacity="0.84"/>
+    <circle cx="646" cy="118" r="7" fill="#fff6dc" opacity="0.88"/>
+
+    <text x="86" y="126" class="overline">REPO POLAROID</text>
+    <text x="84" y="186" class="title">sunrise-cli</text>
+    <text x="86" y="224" class="photoSmall">TypeScript · 5 files · quiet</text>
+
+    <g transform="translate(86 292)">
+      <text class="photoSmall" x="0" y="0">language exposure</text>
+      <rect x="0" y="34" width="512" height="20" rx="10" fill="#131b1a" opacity="0.38"/>
+      <rect x="0" y="34" width="328" height="20" rx="10" fill="#f0be6b"/>
+      <text class="photoSmall" x="346" y="51">TypeScript 68.3%</text>
+      <rect x="0" y="68" width="512" height="20" rx="10" fill="#131b1a" opacity="0.38"/>
+      <rect x="0" y="68" width="85" height="20" rx="10" fill="#83b6a7"/>
+      <text class="photoSmall" x="103" y="85">JSON 17.8%</text>
+      <rect x="0" y="102" width="512" height="20" rx="10" fill="#131b1a" opacity="0.38"/>
+      <rect x="0" y="102" width="67" height="20" rx="10" fill="#e46d52"/>
+      <text class="photoSmall" x="85" y="119">Markdown 13.9%</text>
+    </g>
+
+    <g transform="translate(86 500)">
+      <g transform="translate(0 0)">
+      <rect width="138" height="82" rx="12" fill="#fff1ce" opacity="0.2" stroke="#fff3d4" stroke-opacity="0.42"/>
+      <text class="overline" x="18" y="28">AGE</text>
+      <text class="title" x="18" y="68" style="font-size:34px">133d</text>
+    </g>
+      <g transform="translate(164 0)">
+      <rect width="138" height="82" rx="12" fill="#fff1ce" opacity="0.2" stroke="#fff3d4" stroke-opacity="0.42"/>
+      <text class="overline" x="18" y="28">30 DAYS</text>
+      <text class="title" x="18" y="68" style="font-size:34px">0</text>
+    </g>
+      <g transform="translate(328 0)">
+      <rect width="138" height="82" rx="12" fill="#fff1ce" opacity="0.2" stroke="#fff3d4" stroke-opacity="0.42"/>
+      <text class="overline" x="18" y="28">DIRS</text>
+      <text class="title" x="18" y="68" style="font-size:34px">2</text>
+    </g>
+    </g>
+
+    <g transform="translate(86 610)">
+      <rect x="0" y="-32" width="530" height="42" rx="21" fill="#221c19" opacity="0.34"/>
+      <text class="photoSmall" x="22" y="-5">hot: LICENSE · package.json · README.md</text>
+    </g>
+
+    <g transform="translate(82 724)">
+      <text class="label" x="0" y="0">field notes</text>
+      <text class="text" x="0" y="48">largest room: src</text>
+      <text class="small" x="0" y="84">last commit: 2026-01-01</text>
+    </g>
+
+    <g transform="translate(82 856)">
+      <g transform="translate(0 0)">
+      <rect width="136" height="44" rx="4" fill="#3f7f70" fill-opacity="0.95" stroke="#246052" stroke-width="2"/>
+      <text class="small" x="68" y="29" text-anchor="middle" style="fill:#fff8e8">README</text>
+    </g>
+      <g transform="translate(154 0)">
+      <rect width="136" height="44" rx="4" fill="#3f7f70" fill-opacity="0.95" stroke="#246052" stroke-width="2"/>
+      <text class="small" x="68" y="29" text-anchor="middle" style="fill:#fff8e8">LICENSE</text>
+    </g>
+      <g transform="translate(308 0)">
+      <rect width="136" height="44" rx="4" fill="#3f7f70" fill-opacity="0.95" stroke="#246052" stroke-width="2"/>
+      <text class="small" x="68" y="29" text-anchor="middle" style="fill:#fff8e8">TESTS</text>
+    </g>
+      <g transform="translate(462 0)">
+      <rect width="136" height="44" rx="4" fill="#3f7f70" fill-opacity="0.95" stroke="#246052" stroke-width="2"/>
+      <text class="small" x="68" y="29" text-anchor="middle" style="fill:#fff8e8">CONFIG</text>
+    </g>
+    </g>
+
+    <path d="M70 832 C230 820 420 842 694 820" fill="none" stroke="#d7c5aa" stroke-width="2"/>
+    <text x="82" y="956" class="caption">Practical TypeScript toolkit with its shoes…</text>
+  </g>
+</svg>
