@@ -87,6 +87,17 @@ Repo Polaroid works without AI. If you want a more playful caption, provide an O
 OPENAI_API_KEY=... repo-polaroid . --caption-ai
 ```
 
+OpenAI-compatible APIs work too. For DeepSeek:
+
+```bash
+REPO_POLAROID_API_KEY=... \
+REPO_POLAROID_API_BASE=https://api.deepseek.com \
+REPO_POLAROID_MODEL=deepseek-v4-pro \
+repo-polaroid . --caption-ai
+```
+
+For DeepSeek URLs, Repo Polaroid disables V4 thinking mode automatically because captions should return directly in `content`.
+
 If the key is missing or the request fails, the CLI keeps going with the local caption generator.
 
 ## Local Development

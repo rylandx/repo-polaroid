@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { createPersona } from "../src/persona.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createAiPersona, createPersona } from "../src/persona.js";
 import type { RepoAnalysis } from "../src/types.js";
 
 const baseRepo: Omit<RepoAnalysis, "persona"> = {
@@ -25,6 +25,14 @@ const baseRepo: Omit<RepoAnalysis, "persona"> = {
 };
 
 describe("createPersona", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.REPO_POLAROID_API_KEY;
+    delete process.env.REPO_POLAROID_API_BASE;
+    delete process.env.REPO_POLAROID_MODEL;
+    delete process.env.OPENAI_API_KEY;
+  });
+
   it("returns stable captions for fixed metrics", () => {
     expect(createPersona(baseRepo)).toBe("Tiny TypeScript lab with fresh fingerprints.");
   });
@@ -33,5 +41,48 @@ describe("createPersona", () => {
     expect(createPersona({ ...baseRepo, languages: [], commitsLast30Days: 0, fileCount: 40 })).toBe(
       "Practical mystery code toolkit with its shoes tied."
     );
+  });
+
+  it("uses OpenAI-compatible chat completions when a custom API base is configured", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "DeepSeek caption" } }]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    process.env.REPO_POLAROID_API_KEY = "test-key";
+    process.env.REPO_POLAROID_API_BASE = "https://api.deepseek.com";
+    process.env.REPO_POLAROID_MODEL = "deepseek-v4-pro";
+
+    await expect(createAiPersona({ ...baseRepo, persona: "local caption" })).resolves.toBe("DeepSeek caption");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.deepseek.com/chat/completions",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("\"thinking\":{\"type\":\"disabled\"}")
+      })
+    );
+  });
+
+  it("cleans long AI captions instead of falling back", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: `"${"Specific caption ".repeat(12)}"` } }]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    process.env.REPO_POLAROID_API_KEY = "test-key";
+    process.env.REPO_POLAROID_API_BASE = "https://api.deepseek.com";
+
+    const caption = await createAiPersona({ ...baseRepo, persona: "local caption" });
+
+    expect(caption).toHaveLength(120);
+    expect(caption?.startsWith("\"")).toBe(false);
+    expect(caption?.endsWith("...")).toBe(true);
   });
 });
