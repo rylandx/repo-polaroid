@@ -9,7 +9,7 @@ Turn any local Git repository or folder into a vintage polaroid-style SVG for yo
 
 ![Repo Polaroid example](./assets/demo.svg)
 
-Repo Polaroid reads your local file tree and, when available, Git history. It creates a shareable card with language mix, activity, health signals, notable files, caption source, persona type, and rarity.
+Repo Polaroid reads your local file tree and, when available, Git history. It creates a shareable card with language mix, activity, health signals, notable files, repo weather, caption source, persona type, and rarity.
 
 ```bash
 npm install -g repo-polaroid
@@ -35,7 +35,7 @@ Embed the generated SVG:
 ```bash
 repo-polaroid [path]
 repo-polaroid . --out repo-polaroid.svg --write-readme
-repo-polaroid . --out repo-polaroid.svg --preview
+repo-polaroid . --theme auto --profile --out repo-polaroid.svg
 ```
 
 Options:
@@ -45,9 +45,14 @@ Options:
 --json            Print analysis JSON instead of writing SVG
 --open            Open the generated SVG after writing it
 --preview         Generate and open a local preview HTML page
+--format <name>   Use svg, png, or html
+--profile         Render a wide GitHub profile card
+--in-place        Write default output into the input directory
+--share           Print a short share caption
+--at <ref>        Render a committed Git repository at a Git ref
 --write-readme    Insert or update the README embed block
 --readme <file>   Use a specific README path and enable --write-readme
---theme <name>    Use classic, darkroom, or sunset
+--theme <name>    Use classic, darkroom, sunset, blueprint, terminal, kodak, or auto
 --max-files <n>   Stop scanning after this many files (default: 20000)
 --caption-ai      Try to replace the local caption with an AI caption
 -h, --help        Show help
@@ -61,7 +66,21 @@ repo-polaroid . --theme darkroom
 repo-polaroid . --theme sunset
 ```
 
-`classic` is the default. `darkroom` leans high-contrast and moody. `sunset` is warmer and more colorful for project showcases.
+`classic` is the default. `darkroom` leans high-contrast and moody. `sunset` is warmer for showcases. `blueprint`, `terminal`, and `kodak` add stronger visual identities. Use `--theme auto` to choose from the project profile.
+
+## Play Modes
+
+```bash
+repo-polaroid init
+repo-polaroid . --format png --out repo-polaroid.png
+repo-polaroid . --format html --out repo-polaroid.html
+repo-polaroid . --share
+repo-polaroid . --at HEAD~10 --out old-polaroid.svg
+repo-polaroid compare ./before ./after --out compare.html
+repo-polaroid album /Users/fanli/projects --theme auto --out album.html
+```
+
+`--profile` renders a wide card for GitHub profile READMEs. `compare` and `album` output static HTML files with embedded SVG cards.
 
 ## JSON Output
 
@@ -85,6 +104,7 @@ The JSON keeps compatibility fields such as `commitsLast30Days` and adds clearer
 - `notableFiles`: weighted files selected for the card.
 - `captionSource`: `local`, `ai`, or `fallback`.
 - `personaType`, `personaReasons`, `rarity`, and `rarityScore`: playful local badges for the card.
+- `repoWeather`: a lightweight project mood such as `Sunny`, `Cloudy`, or `Spring Clean`.
 
 ## AI Captions
 
@@ -124,6 +144,33 @@ Repo Polaroid updates this block when it exists, or inserts it after the README 
 ```
 
 Use `--preview` to open a local HTML page with the generated card, Markdown snippet, theme, caption source, persona, and rarity.
+
+## GitHub Action
+
+Use the bundled action metadata to update the card in CI:
+
+```yaml
+name: Repo Polaroid
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g repo-polaroid
+      - run: repo-polaroid . --theme auto --out repo-polaroid.svg --write-readme
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update repo polaroid"
+```
 
 ## Local Development
 

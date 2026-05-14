@@ -149,6 +149,7 @@ function captionPrompt(repo: RepoAnalysis): string {
     languages: repo.languages.slice(0, 3),
     health: repo.health,
     activity: repo.recentActivity,
+    weather: repo.repoWeather,
     source: repo.sourceKind
   })}`;
 }

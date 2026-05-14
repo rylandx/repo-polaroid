@@ -1,0 +1,31 @@
+name: Repo Polaroid
+description: Generate a repo-polaroid SVG for a local GitHub Actions checkout.
+inputs:
+  path:
+    description: Project path to analyze.
+    default: .
+  out:
+    description: SVG output path.
+    default: repo-polaroid.svg
+  theme:
+    description: Theme name: classic, darkroom, sunset, blueprint, terminal, kodak, or auto.
+    default: auto
+  profile:
+    description: Render the wide profile variant.
+    default: "false"
+  write-readme:
+    description: Insert or update the README embed block.
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        args=("${{ inputs.path }}" --theme "${{ inputs.theme }}" --out "${{ inputs.out }}")
+        if [[ "${{ inputs.profile }}" == "true" ]]; then
+          args+=(--profile)
+        fi
+        if [[ "${{ inputs.write-readme }}" == "true" ]]; then
+          args+=(--write-readme)
+        fi
+        npx repo-polaroid "${args[@]}"

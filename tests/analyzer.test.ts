@@ -39,6 +39,7 @@ describe("analyzeRepo", () => {
     expect(analysis.personaType).toBe("Prototype Lab");
     expect(analysis.rarityScore).toBeGreaterThan(0);
     expect(analysis.rarity).toMatch(/Common|Rare|Epic|Legendary/);
+    expect(analysis.repoWeather).toBe("Spring Clean");
   });
 
   it("analyzes a committed local Git repository", () => {

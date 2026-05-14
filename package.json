@@ -10,7 +10,8 @@
     "assets",
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "action.yml"
   ],
   "scripts": {
     "build": "tsc",
@@ -27,7 +28,10 @@
     "polaroid",
     "developer-tools",
     "repo-card",
-    "github-profile"
+    "github-profile",
+    "github-action",
+    "showcase",
+    "album"
   ],
   "author": "",
   "license": "MIT",
@@ -35,7 +39,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "ignore": "^7.0.5"
+    "ignore": "^7.0.5",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

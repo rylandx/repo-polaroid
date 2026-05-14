@@ -21,7 +21,8 @@ const baseRepo: Omit<RepoAnalysis, "persona" | "captionSource" | "personaType" |
   recentActivity: "warming",
   largestDir: "src",
   hotFiles: [],
-  notableFiles: []
+  notableFiles: [],
+  repoWeather: "Spring Clean"
 };
 
 const fullRepo: RepoAnalysis = {

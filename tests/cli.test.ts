@@ -16,10 +16,16 @@ describe("CLI", () => {
       captionAi: false,
       open: true,
       theme: "darkroom",
+      themeInput: "darkroom",
       maxFiles: 10,
       writeReadme: false,
       readme: null,
-      preview: false
+      preview: false,
+      format: "svg",
+      profile: false,
+      inPlace: false,
+      share: false,
+      at: null
     });
   });
 
@@ -31,16 +37,34 @@ describe("CLI", () => {
       captionAi: false,
       open: false,
       theme: "classic",
+      themeInput: "classic",
       maxFiles: 20000,
       writeReadme: true,
       readme: "README.custom.md",
-      preview: true
+      preview: true,
+      format: "svg",
+      profile: false,
+      inPlace: false,
+      share: false,
+      at: null
+    });
+  });
+
+  it("parses play options", () => {
+    expect(parseArgs([".", "--theme", "auto", "--format", "html", "--profile", "--in-place", "--share", "--at", "HEAD~1"])).toMatchObject({
+      themeInput: "auto",
+      format: "html",
+      profile: true,
+      inPlace: true,
+      share: true,
+      at: "HEAD~1"
     });
   });
 
   it("rejects invalid theme and max-files options", () => {
     expect(() => parseArgs(["--theme", "neon"])).toThrow(/Invalid theme/);
     expect(() => parseArgs(["--max-files", "0"])).toThrow(/positive integer/);
+    expect(() => parseArgs(["--format", "pdf"])).toThrow(/Invalid format/);
   });
 
   it("writes an SVG with --out", () => {
@@ -108,6 +132,72 @@ describe("CLI", () => {
     execFileSync("npx", ["tsx", cli, repo, "--theme", "darkroom", "--out", out], { encoding: "utf8" });
 
     expect(fs.readFileSync(out, "utf8")).toContain("#171717");
+  });
+
+  it("writes standalone HTML output", () => {
+    const repo = initRepo({
+      "README.md": "# Demo\n",
+      "index.ts": "export const demo = true;\n"
+    });
+    const out = path.join(makeTempDir(), "card.html");
+
+    execFileSync("npx", ["tsx", cli, repo, "--format", "html", "--theme", "terminal", "--out", out], { encoding: "utf8" });
+
+    const html = fs.readFileSync(out, "utf8");
+    expect(html).toContain("<!doctype html>");
+    expect(html).toContain("<svg");
+    expect(html).toContain("Repo Polaroid");
+  });
+
+  it("writes PNG output", () => {
+    const repo = initRepo({
+      "README.md": "# Demo\n",
+      "index.ts": "export const demo = true;\n"
+    });
+    const out = path.join(makeTempDir(), "card.png");
+
+    execFileSync("npx", ["tsx", cli, repo, "--format", "png", "--out", out], { encoding: "utf8" });
+
+    expect(fs.readFileSync(out).subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+  });
+
+  it("writes profile SVG output", () => {
+    const repo = initRepo({
+      "README.md": "# Demo\n",
+      "index.ts": "export const demo = true;\n"
+    });
+    const out = path.join(makeTempDir(), "profile.svg");
+
+    execFileSync("npx", ["tsx", cli, repo, "--profile", "--out", out], { encoding: "utf8" });
+
+    expect(fs.readFileSync(out, "utf8")).toContain('width="1280"');
+  });
+
+  it("writes the default file into the input directory with --in-place", () => {
+    const repo = initRepo({
+      "README.md": "# Demo\n",
+      "index.ts": "export const demo = true;\n"
+    });
+
+    execFileSync("npx", ["tsx", cli, repo, "--in-place"], { encoding: "utf8" });
+
+    expect(fs.existsSync(path.join(repo, "repo-polaroid.svg"))).toBe(true);
+  });
+
+  it("renders a Git ref with --at", () => {
+    const repo = initRepo({
+      "README.md": "# Demo\n",
+      "index.ts": "export const demo = true;\n"
+    });
+    fs.writeFileSync(path.join(repo, "later.js"), "console.log('later');\n", "utf8");
+    execFileSync("git", ["add", "."], { cwd: repo, stdio: "ignore" });
+    execFileSync("git", ["commit", "-m", "later"], { cwd: repo, stdio: "ignore" });
+
+    const stdout = execFileSync("npx", ["tsx", cli, repo, "--at", "HEAD~1", "--json"], { encoding: "utf8" });
+    const data = JSON.parse(stdout);
+
+    expect(data.languages.map((language: { name: string }) => language.name)).toContain("TypeScript");
+    expect(data.languages.map((language: { name: string }) => language.name)).not.toContain("JavaScript");
   });
 
   it("opens an SVG when --open is provided", () => {
@@ -224,5 +314,49 @@ describe("CLI", () => {
     const data = JSON.parse(stdout);
 
     expect(data.captionSource).toBe("fallback");
+  });
+
+  it("writes an album page for child folders", () => {
+    const root = makeTempDir();
+    fs.mkdirSync(path.join(root, "one"), { recursive: true });
+    fs.mkdirSync(path.join(root, "two"), { recursive: true });
+    fs.writeFileSync(path.join(root, "one", "index.ts"), "export const one = 1;\n", "utf8");
+    fs.writeFileSync(path.join(root, "two", "index.js"), "export const two = 2;\n", "utf8");
+    const out = path.join(makeTempDir(), "album.html");
+
+    execFileSync("npx", ["tsx", cli, "album", root, "--out", out, "--theme", "auto"], { encoding: "utf8" });
+
+    const html = fs.readFileSync(out, "utf8");
+    expect(html).toContain("Repo Polaroid Album");
+    expect(html).toContain("one");
+    expect(html).toContain("two");
+  });
+
+  it("skips unreadable album children and keeps going", () => {
+    const root = makeTempDir();
+    fs.mkdirSync(path.join(root, "small"), { recursive: true });
+    fs.mkdirSync(path.join(root, "large"), { recursive: true });
+    fs.writeFileSync(path.join(root, "small", "index.ts"), "export const one = 1;\n", "utf8");
+    fs.writeFileSync(path.join(root, "large", "a.ts"), "a", "utf8");
+    fs.writeFileSync(path.join(root, "large", "b.ts"), "b", "utf8");
+    const out = path.join(makeTempDir(), "album.html");
+
+    execFileSync("npx", ["tsx", cli, "album", root, "--out", out, "--max-files", "1"], { encoding: "utf8" });
+
+    const html = fs.readFileSync(out, "utf8");
+    expect(html).toContain("small");
+    expect(html).not.toContain("<h2>large</h2>");
+  });
+
+  it("writes a compare page for two paths", () => {
+    const before = makeTempDir();
+    const after = makeTempDir();
+    fs.writeFileSync(path.join(before, "index.ts"), "export const before = 1;\n", "utf8");
+    fs.writeFileSync(path.join(after, "index.ts"), "export const after = 2;\n", "utf8");
+    const out = path.join(makeTempDir(), "compare.html");
+
+    execFileSync("npx", ["tsx", cli, "compare", before, after, "--out", out], { encoding: "utf8" });
+
+    expect(fs.readFileSync(out, "utf8")).toContain("Repo Polaroid Compare");
   });
 });

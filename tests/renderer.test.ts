@@ -34,7 +34,8 @@ describe("SVG rendering", () => {
       personaType: "Tool <Kit>",
       personaReasons: ["strong project signals"],
       rarity: "Epic",
-      rarityScore: 64
+      rarityScore: 64,
+      repoWeather: "Sunny"
     };
 
     const svg = renderSvg(analysis, { theme: "sunset" });
@@ -75,7 +76,8 @@ describe("SVG rendering", () => {
       personaType: "Prototype <Lab>",
       personaReasons: ["folder snapshot"],
       rarity: "Rare",
-      rarityScore: 42
+      rarityScore: 42,
+      repoWeather: "Cloudy"
     };
 
     const svg = renderSvg(analysis);

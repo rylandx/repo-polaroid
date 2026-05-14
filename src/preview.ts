@@ -46,6 +46,7 @@ export function renderPreviewHtml(repo: RepoAnalysis, svgPath: string, theme: Th
       <dl>
         <dt>Theme</dt><dd>${escapeXml(theme)}</dd>
         <dt>Caption</dt><dd>${escapeXml(repo.captionSource)}</dd>
+        <dt>Weather</dt><dd>${escapeXml(repo.repoWeather)}</dd>
         <dt>Persona</dt><dd>${escapeXml(repo.personaType)}</dd>
         <dt>Rarity</dt><dd>${escapeXml(repo.rarity)} (${escapeXml(String(repo.rarityScore))})</dd>
         <dt>Source</dt><dd>${escapeXml(repo.sourceKind)}</dd>

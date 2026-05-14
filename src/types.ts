@@ -23,9 +23,10 @@ export type NotableFile = {
   reason: string;
 };
 
-export type ThemeName = "classic" | "darkroom" | "sunset";
+export type ThemeName = "classic" | "darkroom" | "sunset" | "blueprint" | "terminal" | "kodak";
 export type CaptionSource = "local" | "ai" | "fallback";
 export type Rarity = "Common" | "Rare" | "Epic" | "Legendary";
+export type RepoWeather = "Sunny" | "Cloudy" | "Stormy" | "Night Shift" | "Spring Clean";
 
 export type RepoAnalysis = {
   sourceKind: "git" | "folder";
@@ -53,4 +54,5 @@ export type RepoAnalysis = {
   personaReasons: string[];
   rarity: Rarity;
   rarityScore: number;
+  repoWeather: RepoWeather;
 };

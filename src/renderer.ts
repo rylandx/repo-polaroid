@@ -1,8 +1,9 @@
-import type { RepoAnalysis } from "./types.js";
+import type { RepoAnalysis, ThemeName } from "./types.js";
 import { escapeXml, truncate } from "./svg.js";
 
 type RenderOptions = {
-  theme?: "classic" | "darkroom" | "sunset";
+  theme?: ThemeName;
+  variant?: "polaroid" | "profile";
 };
 
 type Theme = {
@@ -21,7 +22,7 @@ type Theme = {
   accentSoft: string;
 };
 
-const THEMES: Record<Required<RenderOptions>["theme"], Theme> = {
+const THEMES: Record<ThemeName, Theme> = {
   classic: {
     background: "#b99f7d",
     paper: "#fff8ea",
@@ -66,11 +67,57 @@ const THEMES: Record<Required<RenderOptions>["theme"], Theme> = {
     photoText: "#fff0cf",
     accent: "#ff7043",
     accentSoft: "#ffd08a"
+  },
+  blueprint: {
+    background: "#17324d",
+    paper: "#edf6ff",
+    photoStart: "#0e2944",
+    photoMid: "#1d5f8f",
+    photoEnd: "#91c8ff",
+    title: "#f1f8ff",
+    overline: "#a8d7ff",
+    label: "#174061",
+    text: "#10283b",
+    small: "#3b5b72",
+    photoText: "#e7f4ff",
+    accent: "#2f80ed",
+    accentSoft: "#b7ddff"
+  },
+  terminal: {
+    background: "#101512",
+    paper: "#eff7e8",
+    photoStart: "#08110b",
+    photoMid: "#14351f",
+    photoEnd: "#6bd97b",
+    title: "#e8ffe8",
+    overline: "#83f28f",
+    label: "#21351f",
+    text: "#142414",
+    small: "#496044",
+    photoText: "#dfffe2",
+    accent: "#26c943",
+    accentSoft: "#c4f7b5"
+  },
+  kodak: {
+    background: "#5a241c",
+    paper: "#fff2d0",
+    photoStart: "#2c1c16",
+    photoMid: "#b33b24",
+    photoEnd: "#f1b633",
+    title: "#fff7df",
+    overline: "#ffd36d",
+    label: "#5a2c1f",
+    text: "#2e1f16",
+    small: "#75513b",
+    photoText: "#fff0c7",
+    accent: "#d62828",
+    accentSoft: "#fcbf49"
   }
 };
 
 export function renderSvg(repo: RepoAnalysis, options: RenderOptions = {}): string {
   const theme = THEMES[options.theme ?? "classic"];
+  if (options.variant === "profile") return renderProfileSvg(repo, theme, options.theme ?? "classic");
   const languages = repo.languages.length > 0 ? repo.languages : [{ name: "Unknown", files: 0, bytes: 0, percent: 100 }];
   const healthTags = [
     { label: "README", active: repo.health.readme },
@@ -148,7 +195,7 @@ export function renderSvg(repo: RepoAnalysis, options: RenderOptions = {}): stri
 
     <text x="86" y="126" class="overline">REPO POLAROID</text>
     <text x="84" y="186" class="title">${escapeXml(truncate(repo.repoName, 17))}</text>
-    <text x="86" y="224" class="photoSmall">${escapeXml(primaryLanguage)} · ${escapeXml(repo.sourceKind)} · ${escapeXml(repo.fileCount.toLocaleString())} files · ${escapeXml(repo.recentActivity)}</text>
+    <text x="86" y="224" class="photoSmall">${escapeXml(primaryLanguage)} · ${escapeXml(repo.sourceKind)} · ${escapeXml(repo.fileCount.toLocaleString())} files · ${escapeXml(repo.repoWeather)}</text>
     <g transform="translate(86 246)">
       ${renderBadge(0, truncate(repo.personaType, 22), theme.accent, "#fff8e8")}
       ${renderBadge(240, `${repo.rarity} · ${repo.rarityScore}`, theme.accentSoft, "#2d201b")}
@@ -186,6 +233,54 @@ export function renderSvg(repo: RepoAnalysis, options: RenderOptions = {}): stri
   </g>
 </svg>
 `;
+}
+
+function renderProfileSvg(repo: RepoAnalysis, theme: Theme, themeName: ThemeName): string {
+  const languages = repo.languages.length > 0 ? repo.languages : [{ name: "Unknown", files: 0, bytes: 0, percent: 100 }];
+  const primaryLanguage = languages[0]?.name ?? "Unknown";
+  const languageLine = languages.map((language) => `${language.name} ${language.percent}%`).join(" · ");
+  const captionSource = `${repo.captionSource === "ai" ? "AI" : repo.captionSource} caption`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="${escapeXml(repo.repoName)} repository profile card">
+  <defs>
+    <linearGradient id="profilePhoto" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="${theme.photoStart}"/>
+      <stop offset="55%" stop-color="${theme.photoMid}"/>
+      <stop offset="100%" stop-color="${theme.photoEnd}"/>
+    </linearGradient>
+    <filter id="profileShadow" x="-10%" y="-20%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#15120f" flood-opacity="0.28"/>
+    </filter>
+    <style>
+      .title { font: 800 54px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: ${theme.title}; letter-spacing: 0; }
+      .overline { font: 800 14px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: ${theme.overline}; letter-spacing: 3px; }
+      .text { font: 700 24px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: ${theme.photoText}; }
+      .small { font: 600 18px "Avenir Next", "Trebuchet MS", ui-sans-serif, sans-serif; fill: ${theme.photoText}; opacity: 0.9; }
+      .caption { font: 500 28px "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive; fill: ${theme.text}; }
+    </style>
+  </defs>
+  <rect width="1280" height="420" fill="${theme.background}"/>
+  <g transform="translate(42 36)" filter="url(#profileShadow)">
+    <rect width="1196" height="348" rx="14" fill="${theme.paper}"/>
+    <rect x="24" y="24" width="1148" height="230" rx="10" fill="url(#profilePhoto)"/>
+    <text x="54" y="78" class="overline">REPO POLAROID · ${escapeXml(themeName.toUpperCase())}</text>
+    <text x="52" y="146" class="title">${escapeXml(truncate(repo.repoName, 28))}</text>
+    <text x="54" y="190" class="text">${escapeXml(primaryLanguage)} · ${escapeXml(repo.sourceKind)} · ${escapeXml(repo.fileCount.toLocaleString())} files · ${escapeXml(repo.repoWeather)}</text>
+    <text x="54" y="226" class="small">${escapeXml(truncate(languageLine, 86))}</text>
+    ${renderProfileBadge(824, 58, repo.personaType, theme.accent, "#fff8e8")}
+    ${renderProfileBadge(824, 110, `${repo.rarity} · ${repo.rarityScore}`, theme.accentSoft, "#2d201b")}
+    ${renderProfileBadge(824, 162, captionSource, "#fff6df", "#2d201b")}
+    <text x="54" y="306" class="caption">${escapeXml(truncate(repo.persona, 86))}</text>
+  </g>
+</svg>
+`;
+}
+
+function renderProfileBadge(x: number, y: number, label: string, fill: string, text: string): string {
+  return `<g transform="translate(${x} ${y})">
+      <rect width="292" height="36" rx="18" fill="${fill}" opacity="0.94"/>
+      <text class="small" x="146" y="25" text-anchor="middle" style="fill:${text};opacity:1">${escapeXml(truncate(label, 28))}</text>
+    </g>`;
 }
 
 function renderLanguageBars(languages: RepoAnalysis["languages"]): string {

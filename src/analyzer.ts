@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import ignore from "ignore";
-import type { HealthSignals, HotFile, LanguageStat, NotableFile, RepoAnalysis } from "./types.js";
+import type { HealthSignals, HotFile, LanguageStat, NotableFile, RepoAnalysis, RepoWeather } from "./types.js";
 import { git, tryGit } from "./git.js";
 import { createPersona, createPlayfulProfile } from "./persona.js";
 
@@ -72,6 +72,7 @@ export function analyzeRepo(inputPath: string, options: AnalyzeOptions = {}): Re
     : folderNotableFiles;
   const projectAgeDays = Math.max(0, Math.floor((Date.now() - new Date(timeline.firstAt).getTime()) / 86_400_000));
 
+  const recentActivity = timeline.recentCount >= 20 ? "active" : timeline.recentCount >= 3 ? "warming" : "quiet";
   const withoutPersona: Omit<RepoAnalysis, "persona" | "captionSource" | "personaType" | "personaReasons" | "rarity" | "rarityScore"> = {
     sourceKind: isCommittedGitRepo ? "git" : "folder",
     repoName: path.basename(repoPath),
@@ -88,10 +89,11 @@ export function analyzeRepo(inputPath: string, options: AnalyzeOptions = {}): Re
     lastTouchedAt: timeline.lastAt,
     projectAgeDays,
     commitsLast30Days: timeline.recentCount,
-    recentActivity: timeline.recentCount >= 20 ? "active" : timeline.recentCount >= 3 ? "warming" : "quiet",
+    recentActivity,
     largestDir,
     hotFiles,
-    notableFiles
+    notableFiles,
+    repoWeather: detectRepoWeather(health, recentActivity, projectAgeDays)
   };
   const playfulProfile = createPlayfulProfile(withoutPersona);
 
@@ -101,6 +103,15 @@ export function analyzeRepo(inputPath: string, options: AnalyzeOptions = {}): Re
     captionSource: "local",
     ...playfulProfile
   };
+}
+
+function detectRepoWeather(health: HealthSignals, recentActivity: RepoAnalysis["recentActivity"], projectAgeDays: number): RepoWeather {
+  const healthCount = Object.values(health).filter(Boolean).length;
+  if (recentActivity === "active" && healthCount >= 3) return "Sunny";
+  if (recentActivity === "active" && healthCount <= 1) return "Stormy";
+  if (recentActivity === "warming" && healthCount >= 2) return "Spring Clean";
+  if (recentActivity === "quiet" && projectAgeDays >= 180) return "Night Shift";
+  return "Cloudy";
 }
 
 function walkRepo(root: string, maxFiles: number): WalkResult {
